@@ -13,6 +13,9 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Copyright } from "./Login";
 
+import { firebaseAuth } from "../firebase";
+import { signUpWithEmailPassword } from "../Data";
+
 const theme = createTheme();
 
 export default function SignUp() {
@@ -40,8 +43,17 @@ export default function SignUp() {
     setEmailOK(isEmailValid);
     setPasswordOK(isPasswordValid);
     setPasswordMatch(isPasswordMatch);
+
     if (isEmailValid && isPasswordValid && isPasswordMatch) {
-      navigate("/dashboard");
+      signUpWithEmailPassword(email, password, (err, data) => {
+        if (err) {
+          setPasswordOK(false);
+          setEmailOK(false);
+        } else if (data) {
+          localStorage.setItem("user", JSON.stringify(data));
+          window.location.replace("/");
+        }
+      });
     }
   };
 

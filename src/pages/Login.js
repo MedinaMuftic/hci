@@ -1,18 +1,20 @@
-import * as React from "react";
-import Avatar from "@mui/material/Avatar";
-import Button from "@mui/material/Button";
-import CssBaseline from "@mui/material/CssBaseline";
-import TextField from "@mui/material/TextField";
-import FormControlLabel from "@mui/material/FormControlLabel";
-import Checkbox from "@mui/material/Checkbox";
-import Link from "@mui/material/Link";
-import Grid from "@mui/material/Grid";
-import Box from "@mui/material/Box";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
-import Typography from "@mui/material/Typography";
+import Avatar from "@mui/material/Avatar";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Checkbox from "@mui/material/Checkbox";
 import Container from "@mui/material/Container";
+import CssBaseline from "@mui/material/CssBaseline";
+import FormControlLabel from "@mui/material/FormControlLabel";
+import Grid from "@mui/material/Grid";
+import Link from "@mui/material/Link";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
-import { Navigate, useNavigate } from "react-router-dom";
+import TextField from "@mui/material/TextField";
+import Typography from "@mui/material/Typography";
+import * as React from "react";
+import { useNavigate } from "react-router-dom";
+import { signInWithEmailPassword } from "../Data";
+import { firebaseAuth } from "../firebase";
 
 export function Copyright(props) {
   return (
@@ -56,7 +58,15 @@ export default function Login() {
     setEmailOK(isEmailValid);
     setPasswordOK(isPasswordValid);
     if (isEmailValid && isPasswordValid) {
-      navigate("/dashboard");
+      signInWithEmailPassword(email, password, (err, data) => {
+        if (err) {
+          setPasswordOK(false);
+          setEmailOK(false);
+        } else if (data) {
+          localStorage.setItem("user", JSON.stringify(data));
+          window.location.replace("/");
+        }
+      });
     }
   };
 
@@ -94,7 +104,11 @@ export default function Login() {
               autoComplete="email"
               autoFocus
               error={emailOK !== null && !emailOK}
-              helperText={emailOK !== null && !emailOK && "Invalid email"}
+              helperText={
+                emailOK !== null &&
+                !emailOK &&
+                "Email password combination is wrong"
+              }
             />
             <TextField
               margin="normal"
@@ -109,7 +123,7 @@ export default function Login() {
               helperText={
                 passwordOK !== null &&
                 !passwordOK &&
-                "Password must be at least 8 characters long"
+                "Email password combination is wrong"
               }
             />
             <FormControlLabel

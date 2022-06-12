@@ -13,15 +13,24 @@ import {
 import React from "react";
 import NavBar from "../components/NavBar";
 import { useNavigate, useParams } from "react-router-dom";
-import { SUBJECTS } from "../Data";
-import { QUIZES } from "../Data";
+import { getQuizes, getSubjects } from "../Data";
 
 const Quiz = () => {
   // Get route params
   const { quiz_id } = useParams();
   const navigate = useNavigate();
 
-  const quiz = QUIZES.find((quiz) => quiz.id === quiz_id);
+  const [quiz, setQuiz] = React.useState({});
+  const [subject, setSubject] = React.useState({});
+
+  React.useEffect(() => {
+    getSubjects((subjects) => {
+      setSubject(subjects.find((subject) => subject.id === quiz?.subject));
+    });
+    getQuizes((quizes) => {
+      setQuiz(quizes.find((quiz) => quiz.id === quiz_id));
+    });
+  }, []);
 
   const [currentQuestionIndex, setCurrentQuestionIndex] = React.useState(0);
   const [answers, setAnswers] = React.useState([]);
@@ -30,6 +39,8 @@ const Quiz = () => {
   const [score, setScore] = React.useState(0);
 
   const question = quiz?.questions?.[currentQuestionIndex];
+
+  if (!question) return;
 
   const correctAnswer = question.answers.find(
     (answer) => answer.id === question.correctAnswer
@@ -63,99 +74,93 @@ const Quiz = () => {
 
   const isLastQuestion = currentQuestionIndex === totalQuestions - 1;
 
-  const subject = SUBJECTS.find((subject) => subject.id === quiz?.subject);
-
   return (
-    <div>
-      <NavBar />
-      <Container sx={{ pt: 3 }}>
-        <Typography variant="h4" textAlign={"start"} sx={{ paddingBottom: 3 }}>
-          {subject?.name} / {quiz?.name}
-        </Typography>
-        <Container
+    <Container sx={{ pt: 3 }}>
+      <Typography variant="h4" textAlign={"start"} sx={{ paddingBottom: 3 }}>
+        {subject?.name} / {quiz?.name}
+      </Typography>
+      <Container
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          width: 600,
+        }}
+      >
+        <Card
           sx={{
+            width: 600,
+            padding: 4,
             display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
+            flexDirection: "column",
+            backgroundColor: answered
+              ? isCorrect
+                ? "#c2ffc2"
+                : "#ffaeae"
+              : "#fff",
           }}
         >
-          <Card
-            sx={{
-              padding: 4,
-              display: "flex",
-              flexDirection: "column",
-              backgroundColor: answered
-                ? isCorrect
-                  ? "#c2ffc2"
-                  : "#ffaeae"
-                : "#fff",
-            }}
-          >
-            {!answered && !finished && (
-              <FormControl sx={{ marginBottom: 2 }}>
-                <FormLabel
-                  id={"radio-question" + currentQuestionIndex}
-                  sx={{ textAlign: "start", marginBottom: 2 }}
-                >
-                  {currentQuestionIndex + 1}. {question.question}
-                </FormLabel>
-                {question && (
-                  <RadioGroup
-                    name={"radio-" + question.id}
-                    onChange={(e) => {
-                      setAnswers([
-                        ...answers.slice(0, currentQuestionIndex),
-                        e.target.value,
-                      ]);
-                    }}
-                    value={answers[currentQuestionIndex] || ""}
-                  >
-                    {question.answers.map((answer) => {
-                      return (
-                        <FormControlLabel
-                          key={answer.id}
-                          value={answer.id}
-                          control={<Radio />}
-                          label={answer.text}
-                        />
-                      );
-                    })}
-                  </RadioGroup>
-                )}
-              </FormControl>
-            )}
-            {answered && !isCorrect && (
-              <Typography
-                variant="h6"
-                style={{ textDecoration: "line-through" }}
+          {!answered && !finished && (
+            <FormControl sx={{ marginBottom: 2 }}>
+              <FormLabel
+                id={"radio-question" + currentQuestionIndex}
+                sx={{ textAlign: "start", marginBottom: 2 }}
               >
-                {chosenAnswer?.text}
-              </Typography>
-            )}
-            {answered && (
-              <Typography variant="h6">{correctAnswer?.text}</Typography>
-            )}
-            {finished && (
-              <Typography>
-                Final score: {score} / {totalQuestions}{" "}
-              </Typography>
-            )}
-            <Button
-              disabled={!answers[currentQuestionIndex]}
-              onClick={answered || finished ? onNext : onAnswer}
-            >
-              {answered
-                ? isLastQuestion
-                  ? "Finish"
-                  : "Continue"
-                : finished
-                  ? "Back to quizes"
-                  : "Answer"}
-            </Button>
-          </Card>
-        </Container>
+                {currentQuestionIndex + 1}. {question.question}
+              </FormLabel>
+              {question && (
+                <RadioGroup
+                  name={"radio-" + question.id}
+                  onChange={(e) => {
+                    setAnswers([
+                      ...answers.slice(0, currentQuestionIndex),
+                      e.target.value,
+                    ]);
+                  }}
+                  value={answers[currentQuestionIndex] || ""}
+                >
+                  {question.answers.map((answer) => {
+                    return (
+                      <FormControlLabel
+                        key={answer.id}
+                        value={answer.id}
+                        control={<Radio />}
+                        label={answer.text}
+                      />
+                    );
+                  })}
+                </RadioGroup>
+              )}
+            </FormControl>
+          )}
+          {answered && !isCorrect && (
+            <Typography variant="h6" style={{ textDecoration: "line-through" }}>
+              {chosenAnswer?.text}
+            </Typography>
+          )}
+          {answered && (
+            <Typography variant="h6">{correctAnswer?.text}</Typography>
+          )}
+          {finished && (
+            <Typography>
+              Final score: {score} / {totalQuestions}{" "}
+            </Typography>
+          )}
+          <Button
+            disabled={!answers[currentQuestionIndex]}
+            onClick={answered || finished ? onNext : onAnswer}
+          >
+            {answered
+              ? isLastQuestion
+                ? "Finish"
+                : "Continue"
+              : finished
+              ? "Back to quizes"
+              : "Answer"}
+          </Button>
+        </Card>
       </Container>
-    </div>
+    </Container>
   );
 };
 
